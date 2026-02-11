@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Something Fashion | ERP Final Gold</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        
+        @media (min-width: 769px) {
+            .sidebar { width: 260px; height: 100vh; position: fixed; background: #0f172a; display: flex; flex-direction: column; }
+            .content-area { margin-left: 260px; padding: 40px; }
+            .mobile-nav { display: none; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .content-area { padding: 15px; padding-bottom: 80px; }
+            .mobile-nav { display: flex; position: fixed; bottom: 0; width: 100%; background: #0f172a; padding: 15px; justify-content: space-around; z-index: 100; }
+        }
+
+        .nav-active { background: white !important; color: #0f172a !important; border-radius: 12px; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 210mm; height: 297mm; padding: 15mm; display: block !important; background: white !important; color: #000 !important; }
+            @page { size: A4; margin: 0; }
+        }
+        #printArea { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="loginSection" class="fixed inset-0 bg-slate-900 z-[9999] flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center">
+            <h1 class="text-2xl font-black text-slate-800 uppercase mb-6">Something Fashion</h1>
+            <div class="space-y-4">
+                <input id="uID" type="text" placeholder="Username" class="w-full p-4 bg-slate-50 border rounded-xl outline-none font-bold">
+                <input id="uPass" type="password" placeholder="Password" class="w-full p-4 bg-slate-50 border rounded-xl outline-none font-bold" onkeydown="if(event.key==='Enter') login()">
+                <button onclick="login()" class="w-full bg-slate-900 text-white p-4 rounded-xl font-black">LOGIN</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="hidden min-h-screen">
+        <aside class="sidebar p-6 text-slate-400">
+            <h2 class="text-xl font-black text-white mb-10 px-4 uppercase">SF Management</h2>
+            <nav class="space-y-2">
+                <button onclick="nav('dashboard')" id="dn-dashboard" class="w-full text-left p-4 flex items-center gap-4 font-bold transition"><i class="fas fa-chart-line"></i> Dashboard</button>
+                <button onclick="nav('pos')" id="dn-pos" class="w-full text-left p-4 flex items-center gap-4 font-bold transition"><i class="fas fa-plus-circle"></i> Create Bill</button>
+                <button onclick="nav('inventory')" id="dn-inventory" class="w-full text-left p-4 flex items-center gap-4 font-bold transition"><i class="fas fa-boxes"></i> Inventory</button>
+                <button onclick="nav('settings')" id="dn-settings" class="w-full text-left p-4 flex items-center gap-4 font-bold transition"><i class="fas fa-cog"></i> Settings</button>
+            </nav>
+        </aside>
+
+        <main class="content-area">
+            <section id="dashboard" class="page">
+                <h1 class="text-2xl font-black mb-6">Sales Overview</h1>
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="filterSales('today')" class="bg-slate-900 text-white px-5 py-2 rounded-lg font-bold text-xs">Today</button>
+                    <button onclick="filterSales('weekly')" class="bg-white border px-5 py-2 rounded-lg font-bold text-xs shadow-sm">Weekly</button>
+                    <button onclick="filterSales('monthly')" class="bg-white border px-5 py-2 rounded-lg font-bold text-xs shadow-sm">Monthly</button>
+                    <input type="date" id="customDate" onchange="filterSales('custom')" class="bg-indigo-50 px-3 py-1 rounded-lg font-bold text-xs outline-none border border-indigo-200">
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-indigo-600 p-6 rounded-3xl text-white shadow-lg"><p class="text-[10px] font-bold opacity-70 uppercase">Net Sales</p><h3 id="dashTotal" class="text-3xl font-black">৳0</h3></div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border"><p class="text-[10px] text-slate-400 font-bold uppercase">Orders</p><h3 id="dashOrders" class="text-3xl font-black">0</h3></div>
+                </div>
+                <div class="bg-white rounded-3xl shadow-sm overflow-hidden"><table class="w-full text-left font-bold text-sm"><tbody id="dashTable" class="divide-y"></tbody></table></div>
+            </section>
+
+            <section id="settings" class="page hidden">
+                <h1 class="text-2xl font-black mb-6">Admin Controls</h1>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border">
+                        <h2 class="font-black text-lg mb-2">Export Data</h2>
+                        <p class="text-sm text-slate-500 mb-4">সব সেলস রিপোর্ট এক্সেল (Excel) ফাইল হিসেবে ডাউনলোড করুন।</p>
+                        <button onclick="exportToExcel()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-black text-sm uppercase"><i class="fas fa-file-excel"></i> Download Sales Report</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-red-100">
+                        <h2 class="font-black text-lg mb-2 text-red-600">Danger Zone</h2>
+                        <div class="space-y-3">
+                            <button onclick="clearData('orders')" class="w-full text-left bg-red-50 text-red-600 p-3 rounded-lg font-bold text-xs border border-red-100">DELETE ALL ORDERS</button>
+                            <button onclick="clearData('stock')" class="w-full text-left bg-slate-50 text-slate-600 p-3 rounded-lg font-bold text-xs border border-slate-200">RESET INVENTORY</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="pos" class="page hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm space-y-4">
+                        <input id="cName" placeholder="Customer Name" class="w-full p-4 bg-slate-50 rounded-xl outline-none font-bold">
+                        <input id="cPhone" placeholder="Phone" class="w-full p-4 bg-slate-50 rounded-xl outline-none font-bold">
+                        <textarea id="cAddr" placeholder="Address" class="w-full p-4 bg-slate-50 rounded-xl outline-none font-bold h-24"></textarea>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm space-y-4">
+                        <div class="flex gap-2"><select id="itemSelect" class="flex-1 p-4 bg-slate-50 rounded-xl font-bold outline-none"></select><button onclick="addToCart()" class="bg-indigo-600 text-white px-6 rounded-xl"><i class="fas fa-plus"></i></button></div>
+                        <div id="cartItems" class="space-y-2"></div>
+                        <div class="flex gap-2"><input id="discount" type="number" oninput="calcTotal()" placeholder="Disc ৳" class="w-1/2 p-4 bg-red-50 text-red-600 rounded-xl font-bold outline-none"><input id="couCode" type="text" placeholder="Courier Code" class="w-1/2 p-4 bg-indigo-50 text-indigo-700 font-black uppercase rounded-xl outline-none"></div>
+                        <div class="bg-slate-900 p-5 rounded-2xl text-white flex justify-between items-center">
+                            <h2 id="finalTotal" class="text-2xl font-black">৳0</h2>
+                            <button onclick="processInvoice()" class="bg-indigo-600 px-8 py-3 rounded-xl font-black">PRINT</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="inventory" class="page hidden">
+                <div class="bg-white p-6 rounded-3xl shadow-sm space-y-4 mb-6">
+                    <div class="grid grid-cols-3 gap-2"><input id="pName" placeholder="Product" class="p-4 bg-slate-50 rounded-xl"><input id="pPrice" placeholder="Price" class="p-4 bg-slate-50 rounded-xl"><input id="pQty" placeholder="Stock" class="p-4 bg-slate-50 rounded-xl"></div>
+                    <button onclick="saveStock()" class="w-full bg-slate-900 text-white p-4 rounded-xl font-black">ADD PRODUCT</button>
+                </div>
+                <div class="bg-white rounded-3xl shadow-sm overflow-hidden"><table class="w-full text-left text-sm font-bold"><tbody id="stockTable" class="divide-y"></tbody></table></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="printArea" style="font-family: Arial, sans-serif; color: #000 !important; width: 210mm;">
+        <div style="text-align: center; border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 25px;">
+            <h1 style="margin: 0; font-size: 36px; font-weight: 900; letter-spacing: -2px;">SOMETHING FASHION</h1>
+            <p style="margin: 5px 0 0; font-size: 15px; font-weight: bold;">NIKRAIL, TANGAIL | 01983960545</p>
+        </div>
+        <div style="margin-bottom: 30px; line-height: 1.5;">
+            <p style="font-size: 18px; margin: 5px 0;"><b>Invoice No:</b> #<span id="prID"></span> | <b>Date:</b> <span id="prDate"></span></p>
+            <div style="border: 2px solid #000; padding: 15px; border-radius: 10px; margin-top: 15px;">
+                <p style="margin: 0 0 5px; font-size: 22px; font-weight: 900;">CUSTOMER: <span id="prName"></span></p>
+                <p style="margin: 0 0 5px; font-size: 20px; font-weight: 900;">PHONE: <span id="prPhone"></span></p>
+                <p style="margin: 0; font-size: 18px; font-weight: bold;">ADDRESS: <span id="prAddr"></span></p>
+            </div>
+        </div>
+        <table style="width: 100%; border-top: 3px solid #000; border-collapse: collapse; margin-bottom: 25px;">
+            <thead><tr style="border-bottom: 2px solid #000;"><th style="padding: 15px 0; text-align: left; font-size: 18px;">Item Description</th><th style="padding: 15px 0; text-align: right; font-size: 18px;">Price</th></tr></thead>
+            <tbody id="prItemsList" style="font-size: 18px; font-weight: bold;"></tbody>
+        </table>
+        <div style="text-align: right; font-weight: 900; border-top: 2px solid #000; padding-top: 15px;">
+            <p style="margin: 0; font-size: 18px;">Subtotal: ৳<span id="prSub"></span></p>
+            <p style="margin: 5px 0; font-size: 18px;">Discount: -৳<span id="prDisc"></span></p>
+            <p style="margin: 10px 0 0; font-size: 30px; background: #000; color: #fff; display: inline-block; padding: 5px 25px; font-weight: 900;">NET PAYABLE: ৳<span id="prNet"></span></p>
+        </div>
+        <div style="margin-top: 60px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="border: 5px solid #000; padding: 20px 40px; text-align: center;">
+                <p style="font-size: 14px; margin: 0; font-weight: 900; text-transform: uppercase;">Courier Code</p>
+                <p style="font-size: 50px; font-weight: 900; margin: 0; letter-spacing: 5px;" id="prCourier"></p>
+            </div>
+            <p style="font-size: 18px; font-weight: 900; border-top: 2px solid #000; padding-top: 10px; width: 200px; text-align: center;">Authorized Signature</p>
+        </div>
+    </div>
+
+    <script>
+        let orders = JSON.parse(localStorage.getItem('sf_orders')) || [];
+        let stock = JSON.parse(localStorage.getItem('sf_stock')) || [];
+        let cart = [];
+
+        function login() {
+            if(document.getElementById('uID').value === 'admin' && document.getElementById('uPass').value === '13139645') {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+                nav('dashboard');
+            } else alert("Invalid Login!");
+        }
+
+        function nav(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('nav-active'));
+            if(document.getElementById('dn-'+id)) document.getElementById('dn-'+id).classList.add('nav-active');
+            if(id === 'dashboard') filterSales('today');
+            if(id === 'inventory') renderStock();
+            if(id === 'pos') renderPosSel();
+        }
+
+        function filterSales(range) {
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            let list = orders.filter(o => {
+                const orderDate = new Date(o.date_raw);
+                if(range === 'today') return o.date_raw === todayStr;
+                if(range === 'weekly') {
+                    const sevenDaysAgo = new Date();
+                    sevenDaysAgo.setDate(now.getDate() - 7);
+                    return orderDate >= sevenDaysAgo;
+                }
+                if(range === 'monthly') return o.date_raw.startsWith(todayStr.slice(0, 7));
+                if(range === 'custom') return o.date_raw === document.getElementById('customDate').value;
+                return true;
+            });
+            document.getElementById('dashTotal').innerText = "৳" + list.reduce((a, b) => a + b.total, 0);
+            document.getElementById('dashOrders').innerText = list.length;
+            const tb = document.getElementById('dashTable'); tb.innerHTML = '';
+            list.slice().reverse().forEach(o => tb.innerHTML += `<tr><td class="p-4">${o.name}<br><small>#${o.id}</small></td><td class="p-4 text-right">৳${o.total}</td></tr>`);
+        }
+
+        function exportToExcel() {
+            if(orders.length === 0) return alert("No orders found to export!");
+            let csv = "InvoiceID,Date,Customer,Phone,Amount,CourierCode\n";
+            orders.forEach(o => {
+                csv += `${o.id},${o.date},${o.name},${o.phone},${o.total},${o.courier}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'SF_Sales_Report.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function clearData(type) {
+            if(confirm('এটি ডিলিট করলে আর ফিরে পাওয়া যাবে না। আপনি কি নিশ্চিত?')) {
+                if(type === 'orders') { orders = []; localStorage.setItem('sf_orders', JSON.stringify([])); }
+                if(type === 'stock') { stock = []; localStorage.setItem('sf_stock', JSON.stringify([])); }
+                alert('Data Cleared!'); location.reload();
+            }
+        }
+
+        function saveStock() {
+            const n = document.getElementById('pName').value, p = document.getElementById('pPrice').value, q = document.getElementById('pQty').value;
+            if(!n || !p) return;
+            stock.push({ id: Date.now(), name: n, price: parseFloat(p), qty: q || 0 });
+            localStorage.setItem('sf_stock', JSON.stringify(stock)); renderStock();
+            document.getElementById('pName').value = ''; document.getElementById('pPrice').value = ''; document.getElementById('pQty').value = '';
+        }
+
+        function renderStock() {
+            const tb = document.getElementById('stockTable'); tb.innerHTML = '';
+            stock.forEach(s => tb.innerHTML += `<tr><td class="p-4">${s.name} (Stock: ${s.qty})</td><td class="p-4 text-right">৳${s.price}</td><td class="p-4 text-right text-red-500" onclick="stock=stock.filter(x=>x.id!==${s.id});localStorage.setItem('sf_stock',JSON.stringify(stock));renderStock();"><i class="fas fa-trash"></i></td></tr>`);
+        }
+
+        function renderPosSel() {
+            const s = document.getElementById('itemSelect'); s.innerHTML = '<option value="0">Select Product</option>';
+            stock.forEach(i => s.innerHTML += `<option value="${i.price}" data-name="${i.name}">${i.name} - ৳${i.price}</option>`);
+        }
+
+        function addToCart() {
+            const sel = document.getElementById('itemSelect');
+            if(sel.value == 0) return;
+            cart.push({ name: sel.options[sel.selectedIndex].dataset.name, price: parseFloat(sel.value) });
+            const cDiv = document.getElementById('cartItems'); cDiv.innerHTML = '';
+            cart.forEach((it, ix) => cDiv.innerHTML += `<div class="bg-slate-50 p-3 rounded-xl flex justify-between font-bold text-xs"><span>${it.name}</span><i onclick="cart.splice(${ix},1);addToCart();" class="fas fa-times text-red-500 cursor-pointer"></i></div>`);
+            calcTotal();
+        }
+
+        function calcTotal() {
+            const sub = cart.reduce((a, b) => a + b.price, 0);
+            const disc = parseFloat(document.getElementById('discount').value) || 0;
+            document.getElementById('finalTotal').innerText = "৳" + (sub - disc);
+        }
+
+        function processInvoice() {
+            if(cart.length === 0) return;
+            const sub = cart.reduce((a, b) => a + b.price, 0);
+            const disc = parseFloat(document.getElementById('discount').value) || 0;
+            const o = {
+                id: Math.floor(1000 + Math.random() * 9000),
+                date: new Date().toLocaleDateString('en-GB'),
+                date_raw: new Date().toISOString().split('T')[0],
+                name: document.getElementById('cName').value || "Guest",
+                phone: document.getElementById('cPhone').value || "N/A",
+                addr: document.getElementById('cAddr').value || "N/A",
+                items: [...cart], sub, disc, total: sub - disc,
+                courier: document.getElementById('couCode').value || "---"
+            };
+            orders.push(o); localStorage.setItem('sf_orders', JSON.stringify(orders));
+            
+            document.getElementById('prID').innerText = o.id;
+            document.getElementById('prDate').innerText = o.date;
+            document.getElementById('prName').innerText = o.name;
+            document.getElementById('prPhone').innerText = o.phone;
+            document.getElementById('prAddr').innerText = o.addr;
+            document.getElementById('prSub').innerText = o.sub;
+            document.getElementById('prDisc').innerText = o.disc;
+            document.getElementById('prNet').innerText = o.total;
+            document.getElementById('prCourier').innerText = o.courier;
+
+            const list = document.getElementById('prItemsList'); list.innerHTML = '';
+            o.items.forEach(i => list.innerHTML += `<tr><td style="padding:15px 0;">${i.name}</td><td style="text-align:right;">৳${i.price}</td></tr>`);
+
+            setTimeout(() => { window.print(); cart=[]; document.getElementById('cartItems').innerHTML=''; calcTotal(); }, 500);
+        }
+    </script>
+</body>
+</html>
